@@ -1,127 +1,91 @@
-const SERVER_URL = "wss://shadow-link-server.onrender.com/ws";
-
-const username =
-    localStorage.getItem("shadow_username");
-
-if (!username) {
-
-    window.location.href = "login.html";
-
-}
-
 let socket = null;
+
+let username = localStorage.getItem("shadow_username") || "Guest";
 
 let currentChannel = "general";
 
-const status =
-    document.getElementById("status");
+const status = document.getElementById("status");
+const messages = document.getElementById("messages");
+const input = document.getElementById("msgInput");
 
-const messages =
-    document.getElementById("messages");
+// Connect to the same host the page was loaded from
+const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+const wsURL = protocol + window.location.host + "/ws";
 
-function connect() {
+console.log("Connecting to:", wsURL);
 
-    socket = new WebSocket(SERVER_URL);
+socket = new WebSocket(wsURL);
 
-    socket.onopen = () => {
+socket.onopen = function () {
 
-        console.log("Connected");
+    console.log("Connected!");
 
-        if (status)
-            status.innerHTML = "🟢 Connected";
+    status.innerHTML = "🟢 Connected";
 
-    };
+};
 
-    socket.onmessage = (event) => {
+socket.onmessage = function (event) {
 
-        const data = event.data;
+    // First message from server requests username
+    if (event.data === "USERNAME") {
 
-        if (data === "USERNAME") {
+        socket.send(username);
 
-            socket.send(username);
+        return;
 
-            return;
+    }
 
-        }
+    const parts = event.data.split("|");
 
-        const parts = data.split("|");
+    if (parts.length < 3) return;
 
-        if (parts.length !== 3)
-            return;
+    const user = parts[0];
+    const channel = parts[1];
+    const text = parts.slice(2).join("|");
 
-        const user = parts[0];
-        const channel = parts[1];
-        const text = parts[2];
+    if (channel !== currentChannel) return;
 
-        if (channel !== currentChannel)
-            return;
+    const div = document.createElement("div");
 
-        addMessage(user, text);
-
-    };
-
-    socket.onclose = () => {
-
-        console.log("Disconnected");
-
-        if (status)
-            status.innerHTML = "🔴 Disconnected";
-
-    };
-
-    socket.onerror = (e) => {
-
-        console.log(e);
-
-        if (status)
-            status.innerHTML = "⚠️ Connection Error";
-
-    };
-
-}
-
-function addMessage(user, text) {
-
-    const div =
-        document.createElement("div");
-
-    div.className = "msg";
-
-    div.innerHTML =
-        `<span class="user">${escapeHTML(user)}</span>: ${escapeHTML(text)}`;
+    div.innerHTML = `<strong>${user}</strong>: ${text}`;
 
     messages.appendChild(div);
 
-    messages.scrollTop =
-        messages.scrollHeight;
+    messages.scrollTop = messages.scrollHeight;
 
-}
+};
+
+socket.onclose = function () {
+
+    console.log("Disconnected");
+
+    status.innerHTML = "🔴 Disconnected";
+
+};
+
+socket.onerror = function (err) {
+
+    console.log(err);
+
+    status.innerHTML = "🔴 Connection Error";
+
+};
 
 function sendMessage() {
 
-    const input =
-        document.getElementById("msgInput");
+    const text = input.value.trim();
 
-    if (!input)
+    if (text === "") return;
+
+    if (socket.readyState !== WebSocket.OPEN) {
+
+        alert("Not connected to server.");
+
         return;
 
-    const text =
-        input.value.trim();
+    }
 
-    if (text === "")
-        return;
-
-    if (!socket)
-        return;
-
-    if (socket.readyState !== WebSocket.OPEN)
-        return;
-
-    socket.send(
-        currentChannel +
-        "|" +
-        text
-    );
+    socket.send(currentChannel + "|" + text);
 
     input.value = "";
 
@@ -131,46 +95,22 @@ function switchChannel(channel) {
 
     currentChannel = channel;
 
-    if (messages)
-        messages.innerHTML = "";
+    messages.innerHTML = "";
 
-    if (
-        socket &&
-        socket.readyState === WebSocket.OPEN
-    ) {
+    if (socket.readyState === WebSocket.OPEN) {
 
-        socket.send(
-            "CHANGE_CHANNEL|" +
-            channel
-        );
+        socket.send("CHANGE_CHANNEL|" + channel);
 
     }
 
 }
 
-function escapeHTML(text) {
+input.addEventListener("keydown", function (e) {
 
-    const div =
-        document.createElement("div");
+    if (e.key === "Enter") {
 
-    div.innerText = text;
+        sendMessage();
 
-    return div.innerHTML;
+    }
 
-}
-
-const input =
-    document.getElementById("msgInput");
-
-if (input) {
-
-    input.addEventListener("keydown", function(e){
-
-        if(e.key === "Enter")
-            sendMessage();
-
-    });
-
-}
-
-connect();
+});
