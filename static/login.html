@@ -3,8 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Shadow Link</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Shadow Link Login</title>
+
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
@@ -15,17 +16,18 @@
 
         <h1>Shadow Link</h1>
 
-        <p>Sign in to continue</p>
+        <p>Welcome! Enter a username to continue.</p>
 
         <input
             id="username"
             type="text"
             maxlength="20"
             placeholder="Username"
+            autocomplete="off"
         >
 
         <button id="loginButton">
-            Join
+            Join Shadow Link
         </button>
 
     </div>
@@ -54,20 +56,24 @@ function login() {
         username
     );
 
-    window.location.href = "index.html";
+    // Go to the chat page served by FastAPI
+    window.location.href = "/chat";
 
 }
 
 document
 .getElementById("loginButton")
-.onclick = login;
+.addEventListener("click", login);
 
 document
 .getElementById("username")
-.addEventListener("keydown", function(e){
+.addEventListener("keydown", function(event) {
 
-    if(e.key === "Enter")
+    if (event.key === "Enter") {
+
         login();
+
+    }
 
 });
 
