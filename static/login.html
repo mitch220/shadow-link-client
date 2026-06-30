@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Shadow Link</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="login-page">
+
+    <div class="login-box">
+
+        <h1>Shadow Link</h1>
+
+        <p>Sign in to continue</p>
+
+        <input
+            id="username"
+            type="text"
+            maxlength="20"
+            placeholder="Username"
+        >
+
+        <button id="loginButton">
+            Join
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+function login() {
+
+    const username = document
+        .getElementById("username")
+        .value
+        .trim();
+
+    if (username.length < 2) {
+
+        alert("Please enter a username.");
+
+        return;
+
+    }
+
+    localStorage.setItem(
+        "shadow_username",
+        username
+    );
+
+    window.location.href = "index.html";
+
+}
+
+document
+.getElementById("loginButton")
+.onclick = login;
+
+document
+.getElementById("username")
+.addEventListener("keydown", function(e){
+
+    if(e.key === "Enter")
+        login();
+
+});
+
+</script>
+
+</body>
+</html>
